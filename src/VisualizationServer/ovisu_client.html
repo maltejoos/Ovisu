@@ -1,0 +1,150 @@
+<!DOCTYPE HTML>
+<html>
+   <head>
+	
+      <script type="text/javascript">
+      
+      //global variables
+      //triplets: x, y, theta
+      var global_positions = [];
+      var max_positions = 99;
+      
+      function Draw()
+      {
+		var c = document.getElementById("myCanvas");
+		var canvas_size = Math.min(window.innerWidth, window.innerHeight)
+		c.width  = canvas_size - 20;
+		c.height = canvas_size - 20;
+ 
+                var ctx = c.getContext("2d");
+ 		ctx.lineWidth = 1.5;
+ 		ctx.strokeStyle = 'black';
+ 		
+ 		//set origin to lower left corner
+ 		ctx.translate(0, c.height);
+                ctx.scale(1, -1);
+ 
+ 		var offset_x = c.width/2;
+ 		var offset_y = c.height/2;
+ 
+		 // find scale values to fit in x and y direction
+		 var max_x = 1;
+		 var max_y = 1;
+		 var scale_x = 1;
+		 var scale_y = 1;        	 
+		 for(var i=0; i < global_positions.length;)
+		 { 
+			 var x = global_positions[i];
+			 i++;
+			 var y = global_positions[i];
+			 i++;
+			 i++;//theta is irrelevant
+			 
+			 if(Math.abs(x) > max_x)
+			 {
+				 max_x = Math.abs(x);				 
+			 }
+			 
+			 if(Math.abs(y) > max_y)
+			 {
+				 max_y = Math.abs(y);				 
+			 }
+		 }
+		 var scale_x = (c.width/2)/max_x;
+		 var scale_y = (c.height/2)/max_y;
+		 
+		 // used scale value is smallest scale value in x and y direction
+		 var scale_path = Math.min(scale_x, scale_y);
+		 
+		 // draw path
+		 ctx.beginPath();
+		 var x = global_positions[0];
+                 var y = global_positions[1];                
+                 ctx.moveTo(offset_x + x*scale_path, offset_y + y*scale_path); 
+		 
+		 for(i=3; i < global_positions.length;)
+		 { 
+			 x = global_positions[i];
+			 i++;
+			 y = global_positions[i];
+			 i++;
+			 i++;//theta is irrelevant
+			 
+			 ctx.lineTo(offset_x + x*scale_path, offset_y + y*scale_path);        		 
+		 }
+		 
+		 ctx.stroke();
+		 
+ 		 //draw head as triangle
+		 ctx.beginPath();
+		 ctx.fillStyle = "#F9A520";
+		 
+		 var x_ref = offset_x + global_positions[global_positions.length-3]*scale_path;
+		 var y_ref = offset_y + global_positions[global_positions.length-2]*scale_path;
+		 var theta = global_positions[global_positions.length-1];
+		 
+		 var px =  x_ref - 10*Math.cos(theta+Math.PI/2);
+		 var py =  y_ref - 10*Math.sin(theta+Math.PI/2);		 
+		 ctx.moveTo(px, py);
+		 
+ 		 px =  x_ref + 10*Math.cos(theta+Math.PI/2);
+		 py =  y_ref + 10*Math.sin(theta+Math.PI/2);
+		 ctx.lineTo(px, py);
+		 
+		 px =  x_ref + 10*Math.cos(theta);
+		 py =  y_ref + 10*Math.sin(theta);
+		 ctx.lineTo(px, py);		 
+		 
+		 ctx.fill();
+		 ctx.closePath();
+      };
+      
+      function Ovisu()
+      {  
+    	  if ("WebSocket" in window)
+          {
+             var ws = new WebSocket('ws://192.168.2.107:4321');
+ 	
+             ws.onopen = function()
+             {
+             };
+ 	
+             ws.onmessage = function (evt) 
+             {                
+               	var recv_arr = JSON.parse(evt.data);
+                while(recv_arr.length)
+               	{
+                	if(global_positions.length >= max_positions)
+               		{
+                		global_positions.shift();
+                		global_positions.shift();
+                		global_positions.shift();
+               		}
+                	
+                	global_positions.push(recv_arr.shift());
+               	}
+                
+                Draw();
+             };
+ 	
+             ws.onclose = function()
+             {
+             };
+          }          
+          else
+          {
+             // the browser doesn't support websocket
+             alert("websocket not supported by your browser!");
+          }
+      };
+      </script>
+		
+   </head>
+   <body>
+   
+  		<canvas id="myCanvas" width=100% height=100% ></canvas>
+      <script>Ovisu();</script>
+      
+      
+   </body>
+</html>
