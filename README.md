@@ -4,6 +4,7 @@ Read delta odometry data from iRobot Roomba Open Interface (ROI) and visualize t
 ## System Architecture
 * iRobot Roomba 782e.
 * ESP 8266 (NodeMCU) reads delta rotation and delta translation from the ROI.
+* NodeMCU is powered from the ROI power supply. The voltage is regulated using a Pololu S10V4F5 5V regulator.
 * ESP 8266 sends the odometry data via mqtt to a Raspberry Pi.
 * The Raspberry Pi hosts a mqtt broker.
 * A node.js visualization server on the Raspberry Pi receives the delta odometry data. It integrates it to a global position and provides an array of positions via html5 websockets.
